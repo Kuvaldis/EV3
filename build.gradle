@@ -1,0 +1,85 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
+        classpath "org.hidetake:gradle-ssh-plugin:1.1.4"
+    }
+}
+
+allprojects {
+    group 'kuvaldis.ev3'
+    apply plugin: 'idea'
+}
+
+//noinspection GroovyMissingReturnStatement
+subprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'org.hidetake.ssh'
+
+    sourceSets {
+        test {
+            output.resourcesDir = output.classesDir
+        }
+    }
+
+    jar {
+        manifest {
+            attributes("Class-Path": "/home/root/lejos/lib/ev3classes.jar /home/root/lejos/libjn a/usr/share/java/jna.jar")
+        }
+    }
+
+    shadowJar {
+        dependencies {
+            exclude(dependency(':ev3classes:'))
+        }
+    }
+
+    remotes {
+        ev3 {
+            host = '10.0.1.1'
+            user = 'root' // change to user
+            identity = file(System.getProperty('user.home') + '/.ssh/id_rsa')
+        }
+    }
+
+
+
+    task deploy << {
+        final jarToDeploy = shadowJar.outputs.files.findResult { it.name.contains('.jar') ? it : null }
+        final jarName = jarToDeploy.name
+        println "Deploy $jarName"
+//        ssh.run {
+//            session(remotes.ev3) {
+//                execute 'touch /home/lejos/programs/bl1a'
+//                final txt = get from: '/home/root/bla'
+//                println txt
+//                put from: jarToDeploy, into: "/home/root/$jarName"
+//                put text: "bla", into: "/home/lejos/programs/bla"
+//                execute 'sudo service tomcat restart'
+//            }
+//        }
+    }
+
+    repositories {
+        flatDir {
+            dirs "$rootDir/lib"
+        }
+        mavenLocal()
+        jcenter()
+        mavenCentral()
+    }
+
+    dependencies {
+        compile name: 'ev3classes'
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+    }
+
+    build.dependsOn shadowJar
+}
+

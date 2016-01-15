@@ -1,0 +1,7 @@
+version = '0.0.1-SNAPSHOT'
+
+shadowJar {
+    manifest {
+        attributes("Main-Class": 'kuvaldis.ev3.HelloWorld')
+    }
+}
