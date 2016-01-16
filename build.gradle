@@ -18,6 +18,17 @@ allprojects {
 //noinspection GroovyMissingReturnStatement
 subprojects {
 
+    ext {
+        ev3Ssh = [
+                user   : 'root', // todo: change to user
+                keyfile: '${user.home}/.ssh/id_rsa'
+        ]
+    }
+
+    configurations {
+        ssh
+    }
+
     apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'org.hidetake.ssh'
@@ -30,7 +41,7 @@ subprojects {
 
     jar {
         manifest {
-            attributes("Class-Path": "/home/root/lejos/lib/ev3classes.jar /home/root/lejos/libjn a/usr/share/java/jna.jar")
+            attributes("Class-Path": "/home/root/lejos/lib/ev3classes.jar /home/root/lejos/libjna/usr/share/java/jna.jar")
         }
     }
 
@@ -40,31 +51,7 @@ subprojects {
         }
     }
 
-    remotes {
-        ev3 {
-            host = '10.0.1.1'
-            user = 'root' // change to user
-            identity = file(System.getProperty('user.home') + '/.ssh/id_rsa')
-        }
-    }
-
-
-
-    task deploy << {
-        final jarToDeploy = shadowJar.outputs.files.findResult { it.name.contains('.jar') ? it : null }
-        final jarName = jarToDeploy.name
-        println "Deploy $jarName"
-//        ssh.run {
-//            session(remotes.ev3) {
-//                execute 'touch /home/lejos/programs/bl1a'
-//                final txt = get from: '/home/root/bla'
-//                println txt
-//                put from: jarToDeploy, into: "/home/root/$jarName"
-//                put text: "bla", into: "/home/lejos/programs/bla"
-//                execute 'sudo service tomcat restart'
-//            }
-//        }
-    }
+    build.dependsOn shadowJar
 
     repositories {
         flatDir {
@@ -77,9 +64,36 @@ subprojects {
 
     dependencies {
         compile name: 'ev3classes'
+
         testCompile group: 'junit', name: 'junit', version: '4.12'
+
+        ssh 'org.apache.ant:ant-jsch:1.9.6'
+        ssh 'com.jcraft:jsch:0.1.53'
     }
 
-    build.dependsOn shadowJar
+    task deploy << {
+        group = 'deploy'
+        description = 'Deploys jar to EV3'
+
+        final jarToDeploy = shadowJar.outputs.files.findResult { it.name.contains('.jar') ? it : null }
+        final jarName = jarToDeploy.name
+        println "Deploy $jarName"
+
+        ant.taskdef(name: 'scp', classname: 'org.apache.tools.ant.taskdefs.optional.ssh.Scp',
+                classpath: configurations.ssh.asPath)
+        ant.taskdef(name: 'sshExec', classname: 'org.apache.tools.ant.taskdefs.optional.ssh.SSHExec',
+                classpath: configurations.ssh.asPath)
+
+        ant.scp(todir: "$ev3Ssh.user@10.0.1.1:/home/lejos/programs",
+                keyfile: ev3Ssh.keyfile,
+                verbose: true,
+                file: jarToDeploy)
+        ant.sshExec(host: '10.0.1.1',
+                username: ev3Ssh.user,
+                keyfile: ev3Ssh.keyfile,
+                verbose: true,
+                command: "jrun -jar /home/lejos/programs/$jarName")
+    }
+    deploy.dependsOn build
 }
 
