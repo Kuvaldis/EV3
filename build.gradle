@@ -6,7 +6,6 @@ buildscript {
     }
     dependencies {
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
-        classpath "org.hidetake:gradle-ssh-plugin:1.1.4"
     }
 }
 
@@ -31,7 +30,6 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
-    apply plugin: 'org.hidetake.ssh'
 
     sourceSets {
         test {
