@@ -66,7 +66,6 @@ subprojects {
         testCompile group: 'junit', name: 'junit', version: '4.12'
 
         ssh 'org.apache.ant:ant-jsch:1.9.6'
-        ssh 'com.jcraft:jsch:0.1.53'
     }
 
     task deploy << {
