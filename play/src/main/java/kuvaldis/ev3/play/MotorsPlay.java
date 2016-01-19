@@ -1,10 +1,11 @@
 package kuvaldis.ev3.play;
 
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
+import lejos.hardware.motor.EV3MediumRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 import lejos.utility.Delay;
 
-public class LargeMotorsPlay {
+public class MotorsPlay {
     public void run() {
         final EV3LargeRegulatedMotor motor = new EV3LargeRegulatedMotor(MotorPort.A);
         motor.forward();
@@ -22,6 +23,16 @@ public class LargeMotorsPlay {
         Delay.msDelay(1000);
         motor.flt(true);
         Delay.msDelay(1000);
+        motor.stop(true);
+        motor.setSpeed(400);
+        motor.setAcceleration(800);
+        motor.forward();
+        Delay.msDelay(5000);
         motor.close();
+
+        final EV3MediumRegulatedMotor mediumMotor = new EV3MediumRegulatedMotor(MotorPort.C);
+        mediumMotor.forward();
+        Delay.msDelay(2000);
+        mediumMotor.close();
     }
 }
